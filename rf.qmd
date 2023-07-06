@@ -6,13 +6,12 @@ execute:
   echo: false
 ---
 
-
 ```{r}
 #| message: false
 library(tidyverse)
 library(primer.data)
+library(rstanarm)
 ```
-
 
 ```{r}
 x <- nhanes |>
@@ -21,49 +20,68 @@ x <- nhanes |>
   filter(gender == "Female")
 ```
 
+```{r}
+fit <- stan_glm(data = x,
+                formula = pulse ~ 1,
+                family = gaussian,
+                refresh = 0,
+                seed = 0) 
+```
 
 ```{r}
-glimpse(x)
+newobs <- tibble(.rows = 2)
+
+posterior_epred(object = fit,
+                newdata = newobs) |>
+  as_tibble() |>
+  mutate(diff = abs(`1` - `2`)) 
 ```
+
+```{r}
+pp |> 
+  ggplot(aes(x = diff)) +
+    geom_histogram(aes(y = after_stat(count/sum(count))),
+                   bins = 100) +
+    labs(title = "Posterior ffor the Pulse Difference Between Two Women",
+         subtitle = "Uncertainty for a single individual is much greater than for the expected value",
+         x ="Pulse",
+         y = "Probability",
+         caption = "Data source: NHANES") + 
+    scale_x_continuous(labels = scales::number_format()) +
+    scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
+    theme_classic()
+```
+
+
+
+
+Qestion:  What is the difference in pulse rate between two randomly selected female students in this class?
+
+
+
+
+
+
 Preceptor Table is a table of data with rows and columns such that, if there is no missing data, it is easy to estimate the quantity of interest.
 
 Wisdom is the first Cardinal Virtue in data science. Begin with the quantity of interest. Is that QoI a causal effect or simply a forecast? What Preceptor Table would allow you to calculate your QoI easily? Perform an exploratory data analysis (EDA) on the data you have. Is it valid to consider the data you have and the (theoretical) data from the Preceptor Table to have arisen out of the same population? If so, you may continue. If not, your attempt to estimate your QoI ends now.
 
 Validity is the consistency, or lack there of, in the columns of our dataset and the corresponding columns in our Preceptor Table. In order to consider the two datasets to be drawn from the same population, the columns from one must be have a valid correspondence with the columns in the other. Validity, if true (or at least reasonable), allows us to construct the Population Table.
 
-
-
 **answer this question: What is the difference in pulse rate between two randomly selected female students in this class?**
 
-
-wisdom:
-preditive or causal
-units: Two Females
-outcomes: Pulse rate
-treatment: none
+wisdom: preditive or causal units: Two Females outcomes: Pulse rate treatment: none
 
 covariates:
 
 Preceptor Table:
 
-validity: 
-how is it not validity?
+validity: how is it not validity?
 
+Justice: Stability means that the relationship between the columns in the Population Table is the same for three categories of rows: the data, the Preceptor Table, and the larger population from which both are drawn. Stablility - Reprenstativeness - Unconfounddedness - not a causal model
 
-Justice:
-Stability means that the relationship between the columns in the Population Table is the same for three categories of rows: the data, the Preceptor Table, and the larger population from which both are drawn.
-Stablility - 
-Reprenstativeness - 
-Unconfounddedness - not a causal model
-
-
-formula
+formula: pulse ~ 1
 
 Courage is the third Cardinal Virtue in data science. Justice gave us the data and the structure of the model. Courage allows us to explore different models. Even though Justice has provided the basic mathematical structure of the model, we still need to decide which variables to include and to estimate the values of unknown parameters. We avoid hypothesis tests. We check our models for consistency with the data we have. We select one model.
 
-Courage: 
-
-
-Temperance
-
-
+Courage: Estimate a model: stan_glm(age \~ 1, data = x, seed = 17, refresh = 0) Temperance
